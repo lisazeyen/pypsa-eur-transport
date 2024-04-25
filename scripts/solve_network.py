@@ -406,14 +406,13 @@ def add_endogenous_transport_constraints(n, snapshots):
     """
     Add constraints to relate number of EVs to EV charger, V2G and DSM.
     """
-
     # get index TODO only extendable
     link_ext = n.links[n.links.p_nom_extendable]
     ev_i = link_ext[link_ext.carrier.str.contains("land transport EV")].index
     bev_i = link_ext[link_ext.carrier.str.contains("BEV charger")].index
     v2g_i = link_ext[link_ext.carrier.str.contains("V2G")].index
     bev_dsm_i = n.stores[
-        (n.stores.carrier.str.contains("battery storage") & n.stores.e_nom_extendable)
+        (n.stores.carrier.str.contains("Li ion") & n.stores.e_nom_extendable)
     ].index
 
     if ev_i.empty:
@@ -436,7 +435,7 @@ def add_endogenous_transport_constraints(n, snapshots):
     if not v2g_i.empty:
         
         # constraint for V2G
-        lhs = link_p_nom.loc[ev_light] - (link_p_nom.loc[v2g_i] * f.values)
+        lhs = link_p_nom.loc[ev_light] - (link_p_nom.loc[v2g_i] * f[f.index.str.contains("light")].values)
         n.model.add_constraints(lhs == 0, name="p_nom-EV-V2G")
 
     if not bev_dsm_i.empty:
@@ -444,13 +443,13 @@ def add_endogenous_transport_constraints(n, snapshots):
         f = (
             n.links.loc[ev_light, "p_nom"]
             .rename(n.links.bus0)
-            .div(n.stores.loc[bev_dsm_i, "e_nom"].rename(n.links.bus1))
+            .div(n.stores.loc[bev_dsm_i, "e_nom"].rename(n.stores.bus))
         )
 
         store_e_nom = n.model.variables.Store_e_nom
 
         # constraint for DSM
-        lhs = link_p_nom.loc[ev_i] - (store_e_nom.loc[bev_dsm_i] * f.values)
+        lhs = link_p_nom.loc[ev_light] - (store_e_nom.loc[bev_dsm_i] * f.values)
         n.model.add_constraints(lhs == 0, name="e_nom-EV-DSM")
 
 
@@ -984,11 +983,11 @@ if __name__ == "__main__":
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
-            "solve_sector_network",
-            # configfiles="../config/test/config.perfect.yaml",
+            "solve_sector_network_myopic",
+            configfiles="config/config_transport.yaml",
             simpl="",
             opts="",
-            clusters="40",
+            clusters="38",
             ll="v1.0",
             sector_opts="730H-T-H-B-I-A-dist1",
             planning_horizons="2030",
