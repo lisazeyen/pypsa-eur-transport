@@ -30,6 +30,16 @@ no-flex:
       options: gurobi-numeric-focus
 
 
+flex:
+  sector:
+    bev_dsm: true
+    v2g: false
+  solving:
+    solver:
+      name: gurobi
+      options: gurobi-numeric-focus
+
+
 high-demand:
   sector:
     aviation_demand_factor:
@@ -141,7 +151,12 @@ h2-optimist:
   sector:
     vary:
       capital_cost:
-        land transport fuel cell light: 0.6
-        land transport fuel cell heavy: 0.6
-        land transport EV heavy: 1.4
-        land transport EV light: 1.4
+        land transport fuel cell light: 0.5
+        land transport fuel cell heavy: 0.5
+        land transport EV heavy: 1.5
+        land transport EV light: 1.5
+
+
+high-co2-seq:
+  sector:
+    co2_sequestration_potential: 600
