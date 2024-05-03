@@ -147,3 +147,15 @@ rule solve_sector_network_myopic:
         "../envs/environment.yaml"
     script:
         "../scripts/solve_network.py"
+
+
+#
+# rule copy_config:
+#     output:
+#         config=RESULTS + "configs/config.yaml",
+#     threads: 1
+#     resources: mem_mb=1000
+#     benchmark: RESULTS + "/benchmarks/copy_config"
+#     script: "../scripts/copy_config.py"
+#     conda:
+#         "../envs/environment.yaml"
