@@ -1618,10 +1618,10 @@ def add_EVs(
         carrier=suffix[1:],
         efficiency=efficiency,
         p_min_pu=profile,
-      #  p_max_pu=profile,
+        p_max_pu=profile,
         p_nom=p_nom,
         p_nom_extendable=False,
-        lifetime=1,
+        lifetime=15,
     )
     
     p_nom = (number_cars * options.get("bev_charge_rate", 0.011)
@@ -1707,7 +1707,7 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature,
         p_nom_extendable=False,
         p_nom=p_nom,
         p_min_pu=profile,
-     #   p_max_pu=profile,
+        p_max_pu=profile,
         lifetime=1,
     )
 
@@ -1746,7 +1746,7 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature,
         p_nom_extendable=False,
         p_nom=p_nom,
         p_min_pu=profile,
-       # p_max_pu=profile,
+        p_max_pu=profile,
         lifetime=1,
     )
 
@@ -3954,7 +3954,7 @@ def adjust_transport_temporal_agg(n):
                 n.links_t.p_max_pu[links_i] = 1
                 n.links_t.p_min_pu[links_i] = 0
             else:
-                # n.links_t.p_max_pu[links_i] = profile
+                n.links_t.p_max_pu[links_i] = profile
                 n.links_t.p_min_pu[links_i] = profile
 
 
@@ -4065,7 +4065,12 @@ if __name__ == "__main__":
     n = set_temporal_aggregation(n, resolution, solver_name)
 
     adjust_transport_temporal_agg(n)
-
+    
+    if options["no_pmaxpu"]:
+        link_i = n.links[n.links.carrier.str.contains("land transport")].index
+        common_i = n.links_t.p_max_pu.columns.intersection(link_i)
+        n.links_t.p_max_pu.loc[:, common_i] = 1
+        
     co2_budget = snakemake.params.co2_budget
     if isinstance(co2_budget, str) and co2_budget.startswith("cb"):
         fn = "results/" + snakemake.params.RDIR + "/csvs/carbon_budget_distribution.csv"
