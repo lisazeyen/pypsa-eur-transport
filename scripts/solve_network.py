@@ -149,7 +149,8 @@ def _add_land_use_constraint(n):
             existing_large, "p_nom_min"
         ]
 
-    n.generators.p_nom_max.clip(lower=0, inplace=True)
+    n.generators['p_nom_max'] = n.generators['p_nom_max'].clip(lower=0)
+
 
 
 def _add_land_use_constraint_m(n, planning_horizons, config):
@@ -414,7 +415,7 @@ def add_endogenous_transport_constraints(n, snapshots):
     bev_dsm_i = n.stores[
         (n.stores.carrier.str.contains("Li ion") & n.stores.e_nom_extendable)
     ].index
-
+    
     if ev_i.empty:
         return
     # factor
@@ -436,7 +437,7 @@ def add_endogenous_transport_constraints(n, snapshots):
         
         # constraint for V2G
         lhs = link_p_nom.loc[ev_light] - (link_p_nom.loc[v2g_i] * f[f.index.str.contains("light")].values)
-        n.model.add_constraints(lhs == 0, name="p_nom-EV-V2G")
+        n.model.add_constraints(lhs >= 0, name="p_nom-EV-V2G")
 
     if not bev_dsm_i.empty:
         # factor
@@ -450,9 +451,14 @@ def add_endogenous_transport_constraints(n, snapshots):
 
         # constraint for DSM
         lhs = link_p_nom.loc[ev_light] - (store_e_nom.loc[bev_dsm_i] * f.values)
-        n.model.add_constraints(lhs == 0, name="e_nom-EV-DSM")
+        n.model.add_constraints(lhs >= 0, name="e_nom-EV-DSM")
 
-
+    # TODO as a test remove p_nom
+    # links_i = n.links[(n.links.carrier.str.contains("transport"))
+    #                   & (n.links.p_nom_extendable)].index
+    # n.links.loc[links_i.union(v2g_i), "p_nom"] = 0
+    # n.stores.loc[bev_dsm_i, "e_nom"] = 0
+    
 def add_CCL_constraints(n, config):
     """
     Add CCL (country & carrier limit) constraint to the network.
@@ -949,7 +955,7 @@ def solve_network(n, config, solving, **kwargs):
 
     # add to network for extra_functionality
     n.config = config
-
+    
     if rolling_horizon:
         kwargs["horizon"] = cf_solving.get("horizon", 365)
         kwargs["overlap"] = cf_solving.get("overlap", 0)
@@ -969,6 +975,13 @@ def solve_network(n, config, solving, **kwargs):
         logger.warning(
             f"Solving status '{status}' with termination condition '{condition}'"
         )
+        kwargs["solver_options"]['BarConvTol'] = 1e-5
+        kwargs["solver_options"]['OptimalityTol'] = 1e-4
+        # kwargs["solver_options"]['BarHomogeneous'] = 1
+        logger.warning(
+            f"Rerun with solver settings '{kwargs}'"
+        )
+        status, condition = n.optimize(**kwargs)
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
@@ -977,19 +990,19 @@ def solve_network(n, config, solving, **kwargs):
 
     return n
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
         snakemake = mock_snakemake(
             "solve_sector_network_myopic",
-            configfiles="config/config_transport.yaml",
+            configfiles="/home/lisa/mnt/pypsa-eur/config/config (copy).yaml",
             simpl="",
             opts="",
             clusters="38",
             ll="v1.0",
-            sector_opts="730H-T-H-B-I-A-dist1",
+            sector_opts="25sn-T-H-B-I-A-dist1",
             planning_horizons="2030",
         )
     configure_logging(snakemake)
@@ -1010,7 +1023,14 @@ if __name__ == "__main__":
         planning_horizons=snakemake.params.planning_horizons,
         co2_sequestration_potential=snakemake.params["co2_sequestration_potential"],
     )
-
+    
+    # TODO throw out small capacities
+    # links_i = ((n.links.carrier.str.contains("land transport")|
+    #             (n.links.carrier.str.contains("BEV charger")))
+    #            & ~n.links.p_nom_extendable)
+    # to_drop = n.links[n.links.p_nom<5].loc[links_i].index
+    # n.mremove("Link", to_drop)
+    
     with memory_logger(
         filename=getattr(snakemake.log, "memory", None), interval=30.0
     ) as mem:
