@@ -1618,10 +1618,10 @@ def add_EVs(
         carrier=suffix[1:],
         efficiency=efficiency,
         p_min_pu=profile,
-        p_max_pu=profile,
+      #  p_max_pu=profile,
         p_nom=p_nom,
         p_nom_extendable=False,
-        lifetime=15,
+        lifetime=1,
     )
     
     p_nom = (number_cars * options.get("bev_charge_rate", 0.011)
@@ -1672,7 +1672,7 @@ def add_EVs(
             e_nom=e_nom,
             e_max_pu=1,
             e_min_pu=dsm_profile[nodes],
-            lifetime=1,
+            lifetime=15,
         )
 
 
@@ -1707,7 +1707,7 @@ def add_fuel_cell_cars(n, nodes, p_set, fuel_cell_share, temperature,
         p_nom_extendable=False,
         p_nom=p_nom,
         p_min_pu=profile,
-        p_max_pu=profile,
+     #   p_max_pu=profile,
         lifetime=1,
     )
 
@@ -1746,7 +1746,7 @@ def add_ice_cars(n, nodes, p_set, ice_share, temperature,
         p_nom_extendable=False,
         p_nom=p_nom,
         p_min_pu=profile,
-        p_max_pu=profile,
+       # p_max_pu=profile,
         lifetime=1,
     )
 
@@ -1994,8 +1994,9 @@ def adjust_endogenous_transport(n):
         " load",
         bus=buses_i,
         carrier="load",
-        marginal_cost=1e9,
-        p_nom=1e5,
+        sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
+        marginal_cost=1e2,  # Eur/kWh
+        p_nom=1e9,  # kW
     )
 
     # n.madd(
@@ -2004,8 +2005,9 @@ def adjust_endogenous_transport(n):
     #     " load negative",
     #     bus=buses_i,
     #     carrier="load",
-    #     marginal_cost=-1e9,
-    #     p_nom=1e5,
+    #     marginal_cost=-1e2,
+    #     sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
+    #     p_nom=1e9,
     #     p_max_pu=0,
     #     p_min_pu=-1,
     #     #sign=-1,
@@ -3947,8 +3949,13 @@ def adjust_transport_temporal_agg(n):
             profile = p_set.div(efficiency) / p_set.div(efficiency).max()
     
             n.links.loc[links_i, "p_nom"] = p_nom
-            n.links_t.p_max_pu[links_i] = profile
-            n.links_t.p_min_pu[links_i] = profile
+            # TODO just for testing
+            if engine == "electric": 
+                n.links_t.p_max_pu[links_i] = 1
+                n.links_t.p_min_pu[links_i] = 0
+            else:
+                # n.links_t.p_max_pu[links_i] = profile
+                n.links_t.p_min_pu[links_i] = profile
 
 
 # %%

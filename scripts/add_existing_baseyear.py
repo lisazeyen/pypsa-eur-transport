@@ -601,7 +601,7 @@ def add_existing_land_transport(baseyear, options):
         ice_i = n.links[n.links.carrier == f"land transport oil {transport_type}"].index
         p_nom = n.links.loc[ice_i, "p_nom"] / share
         efficiency = n.links_t.efficiency[ice_i]
-        p_max_pu = n.links_t.p_max_pu[ice_i]
+        p_min_pu = n.links_t.p_min_pu[ice_i]
     
         car_ages = pd.read_csv(fn_dict[transport_type], index_col=[0]).iloc[:,:-2]
         car_ages.columns = car_ages.columns.astype(int)
@@ -629,7 +629,7 @@ def add_existing_land_transport(baseyear, options):
             df.rename(
                 index=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"), inplace=True
             )
-            profile = p_max_pu.rename(
+            profile = p_min_pu.rename(
                 columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"))
             eff = efficiency.rename(
                 columns=lambda x: x.replace(f"-{baseyear}", f"-{build_year}"))
@@ -648,7 +648,7 @@ def add_existing_land_transport(baseyear, options):
                 p_nom_extendable=False,
                 p_nom=df.p_nom,
                 p_min_pu=profile,
-                p_max_pu=profile,
+               # p_max_pu=profile,
                 build_year=df.build_year,
                 lifetime=df.lifetime,
             )
