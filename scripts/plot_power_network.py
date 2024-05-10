@@ -63,7 +63,7 @@ def load_projection(plotting_params):
 
 
 
-def plot_carrier(n, carrier="land transport demand heavy"):
+def plot_carrier(n,  path, carrier="land transport demand heavy"):
     a = (n.statistics.energy_balance(aggregate_bus=False)
          .xs(carrier, level="bus_carrier"))
     assign_location(n)
@@ -88,9 +88,7 @@ def plot_carrier(n, carrier="land transport demand heavy"):
         **map_opts,
     )
     
-    # fig.savefig(f"/home/lisa/mnt/pypsa-eur/results/numeric-fix/high-co2-seq/maps/elec_s_38_lv1.0__25sn-T-H-B-I-A-dist1-{carrier}_2040.pdf")
-    
-    fig.savefig(snakemake.output.map_transport, bbox_inches="tight")
+    fig.savefig(path, bbox_inches="tight")
     
 def plot_map(
     n,
@@ -302,7 +300,10 @@ if __name__ == "__main__":
         map_opts["boundaries"] = regions.total_bounds[[0, 2, 1, 3]] + [-1, 1, -1, 1]
 
     proj = load_projection(snakemake.params.plotting)
-    plot_carrier(n)
+    plot_carrier(n, snakemake.output.map_transport_heavy, 
+                 carrier="land transport demand heavy")
+    plot_carrier(n, snakemake.output.map_transport_light, 
+                 carrier="land transport demand light")
 
     plot_map(n)
     
