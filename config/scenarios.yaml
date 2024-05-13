@@ -15,10 +15,13 @@ lineexpansion:
   sector:
     ll: v1.2
 
+with-p-max-pu:
+  sector:
+    no_pmaxpu: false
+
 base:
   scenario:
-    ll:
-    - v1.0
+    ll: v1.0
 
 no-flex:
   sector:

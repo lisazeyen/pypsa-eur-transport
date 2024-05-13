@@ -38,7 +38,8 @@ def add_brownfield(n, n_p, year):
 
         # first, remove generators, links and stores that track
         # CO2 or global EU values since these are already in n
-        n_p.mremove(c.name, c.df.index[c.df.lifetime == np.inf])
+        n_p.mremove(c.name, c.df.index[(c.df.lifetime == np.inf) &
+                                       ~c.df.index.str.contains("existing")])
 
         # remove assets whose build_year + lifetime <= year
         n_p.mremove(c.name, c.df.index[c.df.build_year + c.df.lifetime <= year])
@@ -76,6 +77,7 @@ def add_brownfield(n, n_p, year):
         # copy over assets but fix their capacity
         c.df[f"{attr}_nom"] = c.df[f"{attr}_nom_opt"]
         c.df[f"{attr}_nom_extendable"] = False
+        
 
         n.import_components_from_dataframe(c.df, c.name)
 
@@ -229,6 +231,23 @@ def adjust_renewable_profiles(n, input_profiles, params, year):
             n.generators_t.p_max_pu.loc[:, p_max_pu.columns] = p_max_pu
 
 
+def adjust_transport(n, ref_year=2024):
+    registrations = pd.read_csv(snakemake.input.car_registration, index_col=[0,1])
+    for transport_type in ["light", "heavy"]:
+        filter_links = (~n.links.p_nom_extendable & (n.links.lifetime==np.inf)
+                        & (n.links.carrier == f"land transport oil {transport_type}"))
+        links_i = n.links[filter_links].index
+        
+        reg = registrations.loc[transport_type].iloc[:,0]
+        
+        unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)
+        previous_year = n_p.links.build_year.max()
+        already_reduced =  1-(reg*(previous_year-ref_year))
+
+        n.links.loc[links_i, "p_nom"] = n.links.loc[links_i, "p_nom"]/already_reduced.values*unchanged_fleet.values
+        
+
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -236,10 +255,11 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "add_brownfield",
             simpl="",
-            clusters="37",
+            configfiles="/home/lisa/mnt/pypsa-eur/config/config (copy).yaml",
+            clusters="38",
             opts="",
             ll="v1.0",
-            sector_opts="168H-T-H-B-I-dist1",
+            sector_opts="49sn-T-H-B-I-dist1",
             planning_horizons=2030,
         )
 
@@ -251,7 +271,9 @@ if __name__ == "__main__":
     logger.info(f"Preparing brownfield from the file {snakemake.input.network_p}")
 
     year = int(snakemake.wildcards.planning_horizons)
-
+    
+    options = snakemake.params.sector
+    
     n = pypsa.Network(snakemake.input.network)
 
     adjust_renewable_profiles(n, snakemake.input, snakemake.params, year)
@@ -263,6 +285,9 @@ if __name__ == "__main__":
     add_brownfield(n, n_p, year)
 
     disable_grid_expansion_if_limit_hit(n)
+    
+    if options["endogenous_transport"]:
+        adjust_transport(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
     n.export_to_netcdf(snakemake.output[0])

@@ -814,6 +814,7 @@ rule build_transport_demand:
         transport_data=resources("transport_data_s{simpl}_{clusters}.csv"),
         avail_profile=resources("avail_profile_s{simpl}_{clusters}.csv"),
         dsm_profile=resources("dsm_profile_s{simpl}_{clusters}.csv"),
+        car_registration=resources("car_registration_s{simpl}_{clusters}.csv"),
     threads: 1
     resources:
         mem_mb=2000,

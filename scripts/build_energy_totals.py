@@ -371,6 +371,8 @@ def idees_per_country(ct, base_dir):
         + ct_totals["total international aviation passenger"]
     )
 
+    # shipping
+    
     df = pd.read_excel(fn_transport, "TrNavi_ene", index_col=0)
 
     # coastal and inland
@@ -380,22 +382,43 @@ def idees_per_country(ct, base_dir):
     df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)
     
     # total number of light duty vehicles
+    
     assert df.index[85] == "Passenger cars"
     ct_totals["Number Passenger cars"] = df.iloc[85]
     
+    # new car registrations
+    assert df.index[112] == "Passenger cars"
+    ct_totals["New registration Passenger cars"] = df.iloc[112]
+    
     assert df.index[84] == "Powered 2-wheelers"
     ct_totals['Number Powered 2-wheelers'] = df.iloc[84]
+    
+    # new car registrations
+    assert df.index[111] == "Powered 2-wheelers"
+    ct_totals["New registration Powered 2-wheelers"] = df.iloc[111]
 
     assert df.index[99] == "Light duty vehicles"
     ct_totals['Number Light duty vehicles'] = df.iloc[99]
+    
+    # new car registrations
+    assert df.index[126] == "Light duty vehicles"
+    ct_totals["New registration Light duty vehicles"] = df.iloc[126]
 
     # total number of heavy duty vehicles
 
     assert df.index[92] == "Motor coaches, buses and trolley buses"
     ct_totals["Number Motor coaches, buses and trolley buses"] = df.iloc[92]
+    
+    # new car registrations
+    assert df.index[119] == "Motor coaches, buses and trolley buses"
+    ct_totals["New registration Motor coaches, buses and trolley buses"] = df.iloc[119]
 
     assert df.index[105] == 'Heavy duty vehicles'
     ct_totals['Number Heavy duty vehicles'] = df.iloc[105]
+    
+    # new car registrations
+    assert df.index[132] == 'Heavy duty vehicles'
+    ct_totals['New registration Heavy duty vehicles'] = df.iloc[132]
     
     # vehicle-km driven (mio km)
     assert df.index[31] == "Passenger cars"
@@ -407,7 +430,7 @@ def idees_per_country(ct, base_dir):
     assert df.index[45] == "Light duty vehicles"
     ct_totals['mio km-driven Light duty vehicles'] = df.iloc[45]
 
-    # total number of heavy duty vehicles
+    # total km-driven of heavy duty vehicles
 
     assert df.index[38] == "Motor coaches, buses and trolley buses"
     ct_totals["mio km-driven Motor coaches, buses and trolley buses"] = df.iloc[38]
@@ -445,7 +468,8 @@ def build_idees(countries):
     eff_cols = ["passenger car efficiency", "heavy duty efficiency"]
     totals.loc[:, eff_cols] *= 1e3
     # convert ktoe to TWh
-    exclude = totals.columns.str.contains("Number") | totals.columns.str.contains("mio km-driven")
+    exclude = (totals.columns.str.contains("Number") | totals.columns.str.contains("mio km-driven")
+               | totals.columns.str.contains("New registration"))
     totals.loc[:, ~exclude] *= 11.63 / 1e3
 
     return totals
@@ -461,6 +485,11 @@ def build_energy_totals(countries, eurostat, swiss, idees):
             "Number Light duty vehicles",
             "Number Motor coaches, buses and trolley buses",
             "Number Heavy duty vehicles",
+            "New registration Passenger cars",
+            "New registration Powered 2-wheelers",
+            "New registration Light duty vehicles",
+            "New registration Motor coaches, buses and trolley buses",
+            "New registration Heavy duty vehicles",
             "passenger car efficiency",
             "heavy duty efficiency",
             'mio km-driven passenger cars',
@@ -791,6 +820,11 @@ def build_transport_data(countries, population, idees):
                 "Number Light duty vehicles",
                 "Number Motor coaches, buses and trolley buses",
                 "Number Heavy duty vehicles",
+                "New registration Passenger cars",
+                "New registration Powered 2-wheelers",
+                "New registration Light duty vehicles",
+                "New registration Motor coaches, buses and trolley buses",
+                "New registration Heavy duty vehicles",
                 'mio km-driven passenger cars',
                 'mio km-driven Powered 2-wheelers',
                 'mio km-driven Light duty vehicles',
@@ -1009,7 +1043,7 @@ def rescale_idees_from_eurostat(
 
     return energy
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake

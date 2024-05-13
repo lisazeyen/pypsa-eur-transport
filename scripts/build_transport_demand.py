@@ -200,6 +200,25 @@ def bev_dsm_profile(snapshots, nodes, options):
     )
 
 
+def build_registrations(nodal_transport_data):
+    numb_car_cols = {"light" :  ['Number Passenger cars',
+                            'Number Powered 2-wheelers',
+                            'Number Light duty vehicles'],
+                "heavy": ['Number Motor coaches, buses and trolley buses',
+                          'Number Heavy duty vehicles']
+                }
+    reg_car_cols = {"light" :  ['New registration Passenger cars',
+                            'New registration Powered 2-wheelers',
+                            'New registration Light duty vehicles'],
+                "heavy": ['New registration Motor coaches, buses and trolley buses',
+                          'New registration Heavy duty vehicles']
+                }
+    share_reg = {}
+    for transport_type in ["light", "heavy"]:
+        share_reg[transport_type] = (nodal_transport_data[reg_car_cols[transport_type]].sum(axis=1)
+                                    .div(nodal_transport_data[numb_car_cols[transport_type]].sum(axis=1)))
+    
+    pd.concat(share_reg).to_csv(snakemake.output.car_registration)
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -208,7 +227,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_transport_demand",
             simpl="",
-            clusters=37,
+            clusters=38,
         )
     configure_logging(snakemake)
     set_scenario_config(snakemake)
@@ -252,3 +271,4 @@ if __name__ == "__main__":
     transport_demand.to_csv(snakemake.output.transport_demand)
     avail_profile.to_csv(snakemake.output.avail_profile)
     dsm_profile.to_csv(snakemake.output.dsm_profile)
+    build_registrations(nodal_transport_data)
