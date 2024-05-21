@@ -597,7 +597,9 @@ def add_existing_land_transport2(baseyear, options, ref_year=2024):
     transport_types = options["land_transport_ice_share"].keys()
     registrations = pd.read_csv(snakemake.input.car_registration, index_col=[0,1])
     for transport_type in transport_types:
-        reg = registrations.loc[transport_type].iloc[:,0]
+        
+        factor = options["car_reg_factor"]
+        reg = registrations.loc[transport_type].iloc[:,0] * factor
         
         share = get(options["land_transport_ice_share"][transport_type], baseyear)
         ice_i = n.links[n.links.carrier == f"land transport oil {transport_type}"].index

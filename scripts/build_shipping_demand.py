@@ -20,7 +20,7 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "build_shipping_demand",
             simpl="",
-            clusters=48,
+            clusters=38,
         )
     set_scenario_config(snakemake)
 
@@ -29,7 +29,16 @@ if __name__ == "__main__":
     demand = pd.read_csv(snakemake.input.demand, index_col=[0, 1])[
         "total international navigation"
     ]
+    
+    
     demand = demand.xs(snakemake.params.energy_totals_year, level=1)
+    
+    # ToDO currently overwriting
+    # demand = pd.read_csv(snakemake.input.transport_data, index_col=[0,1 ])[
+    #     'mio tkm driven international navigation'
+    #     ]
+    
+    # demand = demand.xs(2015, level=1)
 
     # read port data into GeoDataFrame
     with open(snakemake.input.ports, "r", encoding="latin_1") as f:

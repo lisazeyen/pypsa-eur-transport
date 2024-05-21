@@ -674,12 +674,12 @@ def to_csv(df):
     for key in df:
         df[key].to_csv(snakemake.output[key])
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
-
-        snakemake = mock_snakemake("make_summary")
+        snakemake = mock_snakemake("make_summary",
+                                   configfiles="/home/lisa/mnt/pypsa-eur/config/config (copy).yaml")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

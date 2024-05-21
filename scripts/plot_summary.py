@@ -564,12 +564,13 @@ def plot_carbon_budget_distribution(input_eurostat, options):
     path = snakemake.output.balances.split("balances")[0] + "carbon_budget.pdf"
     plt.savefig(path, bbox_inches="tight")
 
-
+#%%
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("plot_summary")
+        snakemake = mock_snakemake("plot_summary",
+                                   configfiles="/home/lisa/mnt/pypsa-eur/config/config (copy).yaml")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

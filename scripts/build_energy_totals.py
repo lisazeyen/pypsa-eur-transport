@@ -125,7 +125,7 @@ def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=
     df = pd.concat([temp, df.loc[~int_avia]])
 
     # Fill in missing data on "Domestic aviation" for each country.
-    domestic_avia = df.index.get_level_values(4) == "Domestic aviation"
+    # assert df.index.get_level_values(4) == "Domestic aviation"
     for country in countries:
         slicer = idx[country, :, :, :, "Domestic aviation"]
         # For the Total and Fossil energy columns, fill in zeros with
@@ -142,6 +142,7 @@ def build_eurostat(input_eurostat, countries, nprocesses=1, disable_progressbar=
         "Domestic navigation": "Domestic Navigation",
         "International maritime bunkers": "Bunkers",
         "UK": "GB",
+        "EL": "GR",
     }
     columns_rename = {"Total": "Total all products"}
     df.rename(index=index_rename, columns=columns_rename, inplace=True)
@@ -180,6 +181,7 @@ def idees_per_country(ct, base_dir):
     fn_residential = f"{base_dir}/JRC-IDEES-2015_Residential_{ct_idees}.xlsx"
     fn_tertiary = f"{base_dir}/JRC-IDEES-2015_Tertiary_{ct_idees}.xlsx"
     fn_transport = f"{base_dir}/JRC-IDEES-2015_Transport_{ct_idees}.xlsx"
+    fn_mbunkers = f"{base_dir}/JRC-IDEES-2015_MBunkers_{ct_idees}.xlsx"
 
     ct_totals = {}
 
@@ -377,11 +379,21 @@ def idees_per_country(ct, base_dir):
 
     # coastal and inland
     ct_totals["total domestic navigation"] = df.loc["by fuel (EUROSTAT DATA)"]
-
-
-    df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)
     
-    # total number of light duty vehicles
+    df = pd.read_excel(fn_transport, "TrNavi_act", index_col=0)
+
+    # coastal and inland
+    ct_totals["mio tkm driven domestic navigation"] = df.loc["Transport activity (mio tkm)"]
+    ct_totals["vehicle-km (mio km) domestic navigation"] = df.loc["Vehicle-km (mio km)"]
+    
+    # international navigation
+    df = pd.read_excel(fn_mbunkers, "MBunk_act", index_col=0)
+    ct_totals["mio tkm driven international navigation"] = df.loc["Transport activity (mio tkm)"]
+    ct_totals["vehicle-km (mio km) international navigation"] = df.loc["Vehicle-km (mio km)"]
+    
+
+    # total number of light duty vehicles 
+    df = pd.read_excel(fn_transport, "TrRoad_act", index_col=0)
     
     assert df.index[85] == "Passenger cars"
     ct_totals["Number Passenger cars"] = df.iloc[85]
@@ -468,8 +480,12 @@ def build_idees(countries):
     eff_cols = ["passenger car efficiency", "heavy duty efficiency"]
     totals.loc[:, eff_cols] *= 1e3
     # convert ktoe to TWh
-    exclude = (totals.columns.str.contains("Number") | totals.columns.str.contains("mio km-driven")
-               | totals.columns.str.contains("New registration"))
+    exclude = (totals.columns.str.contains("Number") 
+               | totals.columns.str.contains("mio km-driven")
+               | totals.columns.str.contains("New registration")
+               | totals.columns.str.contains("vehicle-km (mio km)")
+               | totals.columns.str.contains("mio tkm driven")
+               )
     totals.loc[:, ~exclude] *= 11.63 / 1e3
 
     return totals
@@ -497,7 +513,11 @@ def build_energy_totals(countries, eurostat, swiss, idees):
             'mio km-driven Light duty vehicles',
             'mio km-driven Motor coaches, buses and trolley buses',
             'mio km-driven Heavy duty vehicles',
-            'mio km-driven Rail']
+            'mio km-driven Rail',
+            "mio tkm driven international navigation",
+            "mio tkm driven domestic navigation",
+            "vehicle-km (mio km) international navigation",
+            "vehicle-km (mio km) domestic navigation"]
     
     new_index = pd.MultiIndex.from_product(
         [countries, eurostat_years], names=["country", "year"]
@@ -830,7 +850,11 @@ def build_transport_data(countries, population, idees):
                 'mio km-driven Light duty vehicles',
                 'mio km-driven Motor coaches, buses and trolley buses',
                 'mio km-driven Heavy duty vehicles',
-                'mio km-driven Rail']
+                'mio km-driven Rail',
+                "mio tkm driven international navigation",
+                "mio tkm driven domestic navigation",
+                "vehicle-km (mio km) international navigation",
+                "vehicle-km (mio km) domestic navigation"]
      
     transport_data = pd.DataFrame(idees[car_cols])
 

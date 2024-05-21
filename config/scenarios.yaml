@@ -15,9 +15,9 @@ lineexpansion:
   sector:
     ll: v1.2
 
-with-p-max-pu:
+without-p-max-pu:
   sector:
-    no_pmaxpu: false
+    no_pmaxpu: true
 
 base:
   scenario:
@@ -37,10 +37,9 @@ flex:
   sector:
     bev_dsm: true
     v2g: false
-  # clustering:
-  #   temporal:
-  #     resolution_elec: false
-  #     resolution_sector: 25sn
+  clustering:
+    temporal:
+      resolution_sector: 25sn
   solving:
     solver:
       name: gurobi
@@ -195,6 +194,13 @@ h2-optimist:
         land transport EV heavy: 1.5
         land transport EV light: 1.5
 
+slow:
+  sector:
+    car_reg_factor: 0.5
+
+fast:
+  sector:
+    car_reg_factor: 2
 
 high-co2-seq:
   sector:

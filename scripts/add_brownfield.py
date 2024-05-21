@@ -238,14 +238,25 @@ def adjust_transport(n, ref_year=2024):
                         & (n.links.carrier == f"land transport oil {transport_type}"))
         links_i = n.links[filter_links].index
         
-        reg = registrations.loc[transport_type].iloc[:,0]
+        factor = options["car_reg_factor"]
+        reg = registrations.loc[transport_type].iloc[:,0] * factor
         
         unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)
         previous_year = n_p.links.build_year.max()
         already_reduced =  1-(reg*(previous_year-ref_year))
 
         n.links.loc[links_i, "p_nom"] = n.links.loc[links_i, "p_nom"]/already_reduced.values*unchanged_fleet.values
-        
+    
+    # remove very small capacity
+    logger.info("Removing small land transport capacities")
+    carriers = ['land transport EV heavy', 'land transport fuel cell heavy',
+           'land transport oil heavy', 'land transport EV light',
+           'land transport fuel cell light', 'land transport oil light']
+    
+    land_links = n.links[n.links.carrier.isin(carriers)]
+    to_drop = land_links[(land_links.p_nom<1) & (~n.links.p_nom_extendable)]
+    
+    n.mremove("Link", to_drop.index)
 
 #%%
 if __name__ == "__main__":

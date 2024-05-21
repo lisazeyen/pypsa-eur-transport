@@ -753,6 +753,7 @@ rule build_shipping_demand:
         scope=resources("europe_shape.geojson"),
         regions=resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
         demand=resources("energy_totals.csv"),
+        transport_data=resources("transport_data.csv"),
     params:
         energy_totals_year=config_provider("energy", "energy_totals_year"),
     output:
