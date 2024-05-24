@@ -210,6 +210,9 @@ def configure_logging(snakemake, skip_handlers=False):
 
     kwargs = snakemake.config.get("logging", dict()).copy()
     kwargs.setdefault("level", "INFO")
+    
+    kwargs["level"] = logging.DEBUG
+    kwargs["encoding"] = 'utf-8'
 
     if skip_handlers is False:
         fallback_path = Path(__file__).parent.joinpath(
@@ -218,17 +221,20 @@ def configure_logging(snakemake, skip_handlers=False):
         logfile = snakemake.log.get(
             "python", snakemake.log[0] if snakemake.log else fallback_path
         )
-        kwargs.update(
-            {
-                "handlers": [
-                    # Prefer the 'python' log, otherwise take the first log for each
-                    # Snakemake rule
-                    logging.FileHandler(logfile),
-                    logging.StreamHandler(),
-                ]
-            }
-        )
+        # kwargs.update(
+        #     {
+        #         "handlers": [
+        #             # Prefer the 'python' log, otherwise take the first log for each
+        #             # Snakemake rule
+        #             logging.FileHandler(logfile),
+        #             logging.StreamHandler(),
+        #         ]
+        #     }
+        # )
+        kwargs["filename"] = logfile
     logging.basicConfig(**kwargs)
+    
+    print(kwargs)
 
     # Setup a function to handle uncaught exceptions and include them with their stacktrace into logfiles
     def handle_exception(exc_type, exc_value, exc_traceback):

@@ -243,10 +243,20 @@ def adjust_transport(n, ref_year=2024):
         
         unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)
         previous_year = n_p.links.build_year.max()
-        already_reduced =  1-(reg*(previous_year-ref_year))
-
-        n.links.loc[links_i, "p_nom"] = n.links.loc[links_i, "p_nom"]/already_reduced.values*unchanged_fleet.values
-    
+        already_reduced =  (1-(reg*(previous_year-ref_year))).clip(lower=0)
+        changed = (unchanged_fleet/already_reduced.replace(0,1)).rename(index= lambda x: x + f" land transport oil {transport_type}-existing")
+        n.links.loc[links_i, "p_nom"] = (n.links.loc[links_i, "p_nom"] * changed).fillna(0)
+        
+        # final = {}
+        # for year in [2025, 2030, 2040, 2050]:
+        #     unchanged_fleet = (1-(reg*(year-ref_year))).clip(lower=0)
+        #     already_reduced =  (1-(reg*(previous_year-ref_year))).clip(lower=0)
+        #     changed = (unchanged_fleet/already_reduced.replace(0,1)).rename(index= lambda x: x + f" land transport oil {transport_type}-existing")
+        #     final[year] = (n.links.loc[links_i, "p_nom"] * changed).fillna(0)
+        #     previous_year = year
+                
+            
+        
     # remove very small capacity
     logger.info("Removing small land transport capacities")
     carriers = ['land transport EV heavy', 'land transport fuel cell heavy',
@@ -254,9 +264,33 @@ def adjust_transport(n, ref_year=2024):
            'land transport fuel cell light', 'land transport oil light']
     
     land_links = n.links[n.links.carrier.isin(carriers)]
-    to_drop = land_links[(land_links.p_nom<1) & (~n.links.p_nom_extendable)]
+    to_drop = land_links[(land_links.p_nom<1) & (~land_links.p_nom_extendable)]
     
     n.mremove("Link", to_drop.index)
+    
+    # shipping
+    
+    filter_links = (~n.links.p_nom_extendable
+                    & (n.links.index.str.contains("existing"))
+                    & (n.links.carrier == "shipping oil"))
+    links_i = n.links[filter_links].index
+    
+    factor = options["ship_reg_factor"]
+    reg = options["shipping_registration"] * factor
+    
+    unchanged_fleet = max((1-(reg*(year-ref_year))), 0)
+    previous_year = n_p.links.build_year.max()
+    already_reduced =  max((1-(reg*(previous_year-ref_year))), 0)
+    changed = (unchanged_fleet/already_reduced)
+    n.links.loc[links_i, "p_nom"] = (n.links.loc[links_i, "p_nom"] * changed)
+    
+    carriers = ['shipping oil', 'shipping methanol', 'shipping ammonia']
+    
+    land_links = n.links[n.links.carrier.isin(carriers)]
+    to_drop = land_links[(land_links.p_nom<1) & (~land_links.p_nom_extendable)]
+    
+    if not to_drop.index.empty:
+        n.mremove("Link", to_drop.index)
 
 #%%
 if __name__ == "__main__":
@@ -271,7 +305,7 @@ if __name__ == "__main__":
             opts="",
             ll="v1.0",
             sector_opts="49sn-T-H-B-I-dist1",
-            planning_horizons=2030,
+            planning_horizons=2040,
         )
 
     configure_logging(snakemake)

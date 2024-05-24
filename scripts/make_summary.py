@@ -17,7 +17,9 @@ from _helpers import configure_logging, get_snapshots, set_scenario_config
 from prepare_sector_network import prepare_costs
 
 idx = pd.IndexSlice
+
 logger = logging.getLogger(__name__)
+
 opt_name = {"Store": "e", "Line": "s", "Transformer": "s"}
 
 
@@ -672,6 +674,7 @@ def make_summaries(networks_dict):
 
 def to_csv(df):
     for key in df:
+        # df[key].to_csv(f"/home/lisa/mnt/pypsa-eur/results/{snakemake.params.RDIR }csvs/{key}.csv")
         df[key].to_csv(snakemake.output[key])
 
 #%%
@@ -687,7 +690,7 @@ if __name__ == "__main__":
     networks_dict = {
         (cluster, ll, opt + sector_opt, planning_horizon): "results/"
         + snakemake.params.RDIR
-        + f"/postnetworks/elec_s{simpl}_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
+        + f"postnetworks/elec_s{simpl}_{cluster}_l{ll}_{opt}_{sector_opt}_{planning_horizon}.nc"
         for simpl in snakemake.params.scenario["simpl"]
         for cluster in snakemake.params.scenario["clusters"]
         for opt in snakemake.params.scenario["opts"]
@@ -695,6 +698,8 @@ if __name__ == "__main__":
         for ll in snakemake.params.scenario["ll"]
         for planning_horizon in snakemake.params.scenario["planning_horizons"]
     }
+    
+    logger.info(networks_dict)
 
     time = get_snapshots(snakemake.params.snapshots, snakemake.params.drop_leap_day)
     Nyears = len(time) / 8760

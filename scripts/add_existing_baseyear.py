@@ -710,6 +710,27 @@ def add_existing_land_transport(baseyear, options):
             )
 
         n.links.loc[ice_i, "p_nom"] = 0
+        
+def add_existing_shipping(baseyear, options):
+    # assume all existing ships are diesel ships
+    carrier = 'shipping oil'
+    demand = n.loads[n.loads.carrier=="shipping"].p_set
+    eff = n.links[n.links.carrier==carrier].efficiency
+    p_nom = demand.values/eff
+    factor = options["shipping_registration"]  
+    reg = options["shipping_registration"] * factor
+    df = n.links[n.links.carrier==carrier]
+    df.loc[:,"p_nom_extendable"] = False
+    df.loc[:,"p_nom"] = p_nom * (1-reg)
+    df = df.rename(
+        index=lambda x: x.replace(f"-{baseyear}", "-existing")
+    )
+    
+    df["build_year"] = 0
+    df["lifetime"] = np.inf
+    
+    n.import_components_from_dataframe(df, "Link")
+    
 # %%
 if __name__ == "__main__":
     if "snakemake" not in globals():
@@ -785,6 +806,8 @@ if __name__ == "__main__":
     
     if options["endogenous_transport"]:
         add_existing_land_transport2(baseyear, options)
+    if options["shipping_endogenous"]:
+        add_existing_shipping(baseyear, options)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
 

@@ -304,6 +304,9 @@ if __name__ == "__main__":
                  carrier="land transport demand heavy")
     plot_carrier(n, snakemake.output.map_transport_light, 
                  carrier="land transport demand light")
+    
+    plot_carrier(n, snakemake.output.map_shipping, 
+                 carrier="shipping")
 
     plot_map(n)
     

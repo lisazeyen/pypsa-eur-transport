@@ -39,6 +39,8 @@ if config["foresight"] != "perfect":
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-transport-heavy_{planning_horizons}.pdf",
             map_transport_light=RESULTS
             + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-transport-light_{planning_horizons}.pdf",
+            map_shipping=RESULTS
+            + "maps/elec_s{simpl}_{clusters}_l{ll}_{opts}_{sector_opts}-shipping_{planning_horizons}.pdf",
         threads: 2
         resources:
             mem_mb=10000,

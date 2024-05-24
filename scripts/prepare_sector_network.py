@@ -2967,6 +2967,10 @@ def add_industry(n, costs):
     all_navigation = domestic_navigation + international_navigation
     p_set = all_navigation * 1e6 / nhours
     
+    if "shipping" in options["vary_demand"].keys():
+        factor = get(options["vary_demand"]["shipping"], investment_year)
+        logger.info(f"Vary shipping demand by factor {factor} in {investment_year}")
+        p_set *= factor
     
     if options["shipping_endogenous"]:
         logger.info("Add shipping demand endogenously")
@@ -3018,7 +3022,7 @@ def add_industry(n, costs):
             bus0=spatial.oil.nodes,
             bus1=nodes + " shipping",
             bus2="co2 atmosphere",
-            efficiency=oil_efficiency,
+            efficiency=1/oil_efficiency,
             efficiency2=costs.at["oil", "CO2 intensity"],
             capital_cost=costs.loc["Container, diesel", "fixed"]/ship_km_averaged/oil_efficiency,
             p_min_pu=1,
@@ -3040,7 +3044,7 @@ def add_industry(n, costs):
             bus0=spatial.methanol.nodes,
             bus1=nodes + " shipping",
             bus2="co2 atmosphere",
-            efficiency=methanol_efficiency,
+            efficiency=1/methanol_efficiency,
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
             capital_cost=costs.loc["Container, methanol", "fixed"]/ship_km_averaged/methanol_efficiency,
             lifetime=costs.loc["Container, methanol", "lifetime"],
@@ -3063,9 +3067,47 @@ def add_industry(n, costs):
             bus0=spatial.ammonia.nodes,
             bus1=nodes + " shipping",
             carrier="shipping ammonia",
-            efficiency=ammonia_efficiency,
+            efficiency=1/ammonia_efficiency,
             capital_cost=costs.loc["Container, ammonia", "fixed"]/ship_km_averaged/ammonia_efficiency,
             lifetime=costs.loc["Container, ammonia", "lifetime"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+        
+        # add LNG
+        # LNG not in DEA data
+        lng_eff = 1.15 * costs.loc["Container, diesel", "efficiency"]
+        ship_cost = 1.15 * costs.loc["Container, diesel", "fixed"]/ship_km_averaged/lng_eff,
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping LNG",
+            bus0=spatial.gas.nodes,
+            bus1=nodes + " shipping",
+            bus2="co2 atmosphere",
+            carrier="shipping LNG",
+            efficiency=1/lng_eff,
+            efficiency2=costs.at["gas", "CO2 intensity"],
+            capital_cost=costs.at["CH4 liquefaction", "fixed"] + ship_cost,
+            lifetime=costs.loc["Container, diesel", "lifetime"],
+            p_min_pu=1,
+            p_nom_extendable=True,
+        )
+        
+        # add liquified H2
+        h2_eff = 1.15 * costs.loc["Container, diesel", "efficiency"]
+        ship_cost = 2 * costs.loc["Container, diesel", "fixed"]/ship_km_averaged/h2_eff,
+        n.madd(
+            "Link",
+            nodes,
+            suffix=" shipping LH2",
+            bus0=nodes + " H2",
+            bus1=nodes + " shipping",
+            carrier="shipping LH2",
+            efficiency=1/h2_eff
+            * costs.at["H2 liquefaction", "efficiency"],
+            capital_cost=costs.at["H2 liquefaction", "fixed"] + ship_cost,
+            lifetime=costs.loc["Container, diesel", "lifetime"],
             p_min_pu=1,
             p_nom_extendable=True,
         )
