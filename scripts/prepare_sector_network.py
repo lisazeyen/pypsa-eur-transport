@@ -1999,19 +1999,19 @@ def adjust_endogenous_transport(n):
         p_nom=1e9,  # kW
     )
 
-    # n.madd(
-    #     "Generator",
-    #     buses_i,
-    #     " load negative",
-    #     bus=buses_i,
-    #     carrier="load",
-    #     marginal_cost=-1e2,
-    #     sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
-    #     p_nom=1e9,
-    #     p_max_pu=0,
-    #     p_min_pu=-1,
-    #     #sign=-1,
-    # )
+    n.madd(
+        "Generator",
+        buses_i,
+        " load negative",
+        bus=buses_i,
+        carrier="load",
+        marginal_cost=-1e2,
+        sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
+        p_nom=1e9,
+        p_max_pu=0,
+        p_min_pu=-1,
+        #sign=-1,
+    )
 
     for car_type, cost in costs_car_type.items():
         car_i = n.links[n.links.carrier == car_type].index
@@ -3022,7 +3022,7 @@ def add_industry(n, costs):
             bus0=spatial.oil.nodes,
             bus1=nodes + " shipping",
             bus2="co2 atmosphere",
-            efficiency=1/oil_efficiency,
+            efficiency=round(1/oil_efficiency, ndigits=2),
             efficiency2=costs.at["oil", "CO2 intensity"],
             capital_cost=costs.loc["Container, diesel", "fixed"]/ship_km_averaged/oil_efficiency,
             p_min_pu=1,
@@ -3032,9 +3032,48 @@ def add_industry(n, costs):
         
         # add methanol 
         
+        # efficiency in MWh/km
         methanol_efficiency = costs.loc["Container, methanol", "efficiency"]
         
-        add_carrier_buses(n, "methanol")
+        # add_carrier_buses(n, "methanol")
+        
+        n.madd(
+            "Bus",
+            spatial.methanol.nodes,
+            carrier="methanol",
+            location=spatial.methanol.locations,
+            unit="MWh_LHV",
+        )
+
+        n.madd(
+            "Store",
+            spatial.methanol.nodes,
+            suffix=" Store",
+            bus=spatial.methanol.nodes,
+            e_nom_extendable=True,
+            e_cyclic=True,
+            carrier="methanol",
+        )
+
+        n.madd(
+            "Link",
+            nodes + " methanolisation",
+            bus0=nodes + " H2",
+            bus1=spatial.methanol.nodes,
+            bus2=nodes,
+            bus3=spatial.co2.nodes,
+            carrier="methanolisation",
+            p_nom_extendable=True,
+            p_min_pu=options.get("min_part_load_methanolisation", 0),
+            capital_cost=costs.at["methanolisation", "fixed"]
+            * options["MWh_MeOH_per_MWh_H2"],  # EUR/MW_H2/a
+            marginal_cost=options["MWh_MeOH_per_MWh_H2"]
+            * costs.at["methanolisation", "VOM"],
+            lifetime=costs.at["methanolisation", "lifetime"],
+            efficiency=options["MWh_MeOH_per_MWh_H2"],
+            efficiency2=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_MWh_e"],
+            efficiency3=-options["MWh_MeOH_per_MWh_H2"] / options["MWh_MeOH_per_tCO2"],
+        )
 
         n.madd(
             "Link",
@@ -3044,7 +3083,7 @@ def add_industry(n, costs):
             bus0=spatial.methanol.nodes,
             bus1=nodes + " shipping",
             bus2="co2 atmosphere",
-            efficiency=1/methanol_efficiency,
+            efficiency=round(1/methanol_efficiency, ndigits=2),
             efficiency2=costs.at["methanolisation", "carbondioxide-input"],
             capital_cost=costs.loc["Container, methanol", "fixed"]/ship_km_averaged/methanol_efficiency,
             lifetime=costs.loc["Container, methanol", "lifetime"],
@@ -3067,7 +3106,7 @@ def add_industry(n, costs):
             bus0=spatial.ammonia.nodes,
             bus1=nodes + " shipping",
             carrier="shipping ammonia",
-            efficiency=1/ammonia_efficiency,
+            efficiency=round(1/ammonia_efficiency, ndigits=2),
             capital_cost=costs.loc["Container, ammonia", "fixed"]/ship_km_averaged/ammonia_efficiency,
             lifetime=costs.loc["Container, ammonia", "lifetime"],
             p_min_pu=1,
@@ -3086,7 +3125,7 @@ def add_industry(n, costs):
             bus1=nodes + " shipping",
             bus2="co2 atmosphere",
             carrier="shipping LNG",
-            efficiency=1/lng_eff,
+            efficiency=round(1/lng_eff, ndigits=2),
             efficiency2=costs.at["gas", "CO2 intensity"],
             capital_cost=costs.at["CH4 liquefaction", "fixed"] + ship_cost,
             lifetime=costs.loc["Container, diesel", "lifetime"],
@@ -3104,8 +3143,8 @@ def add_industry(n, costs):
             bus0=nodes + " H2",
             bus1=nodes + " shipping",
             carrier="shipping LH2",
-            efficiency=1/h2_eff
-            * costs.at["H2 liquefaction", "efficiency"],
+            efficiency=round(1/h2_eff
+            * costs.at["H2 liquefaction", "efficiency"], ndigits=2),
             capital_cost=costs.at["H2 liquefaction", "fixed"] + ship_cost,
             lifetime=costs.loc["Container, diesel", "lifetime"],
             p_min_pu=1,
@@ -4099,12 +4138,12 @@ def adjust_transport_temporal_agg(n):
     
             n.links.loc[links_i, "p_nom"] = p_nom
             # TODO just for testing
-            if engine == "electric": 
-                n.links_t.p_max_pu[links_i] = 1
-                n.links_t.p_min_pu[links_i] = 0
-            else:
-                n.links_t.p_max_pu[links_i] = profile
-                n.links_t.p_min_pu[links_i] = profile
+            # if engine == "electric": 
+            #     n.links_t.p_max_pu[links_i] = 1
+            #     n.links_t.p_min_pu[links_i] = 0
+            # else:
+            n.links_t.p_max_pu[links_i] = profile
+            n.links_t.p_min_pu[links_i] = profile
 
 
 # %%

@@ -23,7 +23,7 @@ base:
   scenario:
     ll:
     - v1.0
-    
+
 no-co2limit:
   # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
   co2_budget:
@@ -136,6 +136,9 @@ low-demand:
 high-elec-eff:
   sector:
     transport_electric_efficiency:
+      # default
+      # light: 53.19
+      # heavy: 25
       light: 80
       # assume 40 kWh/100 km = 0.04 MWh/100 km
       heavy: 40
@@ -149,6 +152,10 @@ high-h2-eff:
   # heavy: 3.565
   sector:
     transport_fuel_cell_efficiency:
+      # default
+      # light: 30.003
+      # assume 8.5 kg_H2 per 100 km -> 0.2805 MWh_H2 per 100 km
+      # heavy: 3.565
       # 0.6 kg_H2 per 100 km -> 1 MWh = 1000 kWh = 30.3 kg_H2
       # 30.3 kg_H2 / 0.6 kg_H2/100 km = 50.5 per 100 km
       light: 50
@@ -166,6 +173,9 @@ high-h2-eff-extreme:
       # 0.4 kg_H2 per 100 km -> 1 MWh = 1000 kWh = 30.3 kg_H2
       # 30.3 kg_H2 / 0.4 kg_H2/100 km = 76 per 100 km
       light: 76
+      # 5 kg_H2 per 100 km from "ENERGY OPTIMIZATION STRATEGIES
+      # FOR ZERO EMISSION HEAVY DUTY VEHICLES" https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10531847
+      # 0.16665 kWh_H2 per 100 km -> 1 MWh_H2 ~ 6 * 100
       heavy: 20
 
 high-electrolysis:
@@ -190,19 +200,9 @@ low-electrolysis:
 slow-transition:
   sector:
     vary:
-      capital_cost:
-        H2 Electrolysis: 1.0
       lifetime:
         land transport oil light: 2
         land transport oil heavy: 2
-  # solving:
-  #   solver:
-  #     name: gurobi
-  #     options: gurobi-numeric-focus
-  # clustering:
-  #   temporal:
-  #     resolution_elec: false
-  #     resolution_sector: 25sn
 
 elec-optimist:
   sector:
@@ -232,6 +232,15 @@ ammonia-optimist:
         shipping methanol: 1.2
         shipping ammonia: 0.8
 
+
+ammonia-loweff:
+  sector:
+    vary:
+      efficiency:
+        shipping ammonia: 0.5
+      capital_cost:
+        shipping ammonia: 1.5
+
 methanol-optimist:
   sector:
     vary:
@@ -242,15 +251,29 @@ methanol-optimist:
         shipping methanol: 0.8
         shipping ammonia: 1.2
 
+
+LNG-optimist:
+  sector:
+    vary:
+      efficiency:
+        shipping methanol: 1.2
+        shipping LNG: 0.8
+      capital_cost:
+        shipping methanol: 0.8
+        shipping LNG: 1.2
+
 LH2-optimist:
   sector:
     vary:
       efficiency:
         shipping methanol: 0.8
+        shipping ammonia: 0.8
         shipping LH2: 1.2
       capital_cost:
         shipping methanol: 1.2
+        shipping ammonia: 1.2
         shipping LH2: 0.8
+
 
 slow:
   sector:

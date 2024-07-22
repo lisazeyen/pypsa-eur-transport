@@ -352,8 +352,10 @@ def prepare_network(
         # intersect between macroeconomic and surveybased willingness to pay
         # http://journal.frontiersin.org/article/10.3389/fenrg.2015.00055/full
         # TODO: retrieve color and nice name from config
-        n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
-        buses_i = n.buses.index
+        if not "load" in n.carriers.index:
+            n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
+        buses_i = n.buses.index.difference(n.generators[n.generators.carrier=="load"].bus)
+        
         if not np.isscalar(load_shedding):
             # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
             load_shedding = 1e4  # Eur/kWh
@@ -976,12 +978,56 @@ def solve_network(n, config, solving, **kwargs):
             f"Solving status '{status}' with termination condition '{condition}'"
         )
         kwargs["solver_options"]['BarConvTol'] = 1e-5
-        kwargs["solver_options"]['OptimalityTol'] = 1e-4
+        kwargs["solver_options"]['FeasibilityTol'] = 1e-4
         # kwargs["solver_options"]['BarHomogeneous'] = 1
         logger.warning(
             f"Rerun with solver settings '{kwargs}'"
         )
         status, condition = n.optimize(**kwargs)
+        
+        if status != "ok" and not rolling_horizon:
+            logger.warning(
+                f"Solving status '{status}' with termination condition '{condition}'"
+            )
+            kwargs["solver_options"]['NumericFocus'] = 3
+            kwargs["solver_options"]['OptimalityTol'] = 1e-4
+            # kwargs["solver_options"]['BarHomogeneous'] = 1
+            
+            if not "load" in n.carriers.index:
+                n.add("Carrier", "load", color="#dd2e23", nice_name="Load shedding")
+            buses_i = n.buses.index.difference(n.generators[n.generators.carrier=="load"].bus)
+
+            # TODO: do not scale via sign attribute (use Eur/MWh instead of Eur/kWh)
+            load_shedding = 1e4  # Eur/kWh
+            if not buses_i.empty:
+                n.madd(
+                    "Generator",
+                    buses_i,
+                    " load",
+                    bus=buses_i,
+                    carrier="load",
+                    sign=1e-3,  # Adjust sign to measure p and p_nom in kW instead of MW
+                    marginal_cost=load_shedding,  # Eur/kWh
+                    p_nom=1e9,  # kW
+                )
+            
+            logger.warning(
+                f"Rerun with load shedding and solver settings '{kwargs}'"
+            )
+            status, condition = n.optimize(**kwargs)
+            
+            if status != "ok" and not rolling_horizon:
+                logger.warning(
+                    f"Solving status '{status}' with termination condition '{condition}'"
+                )
+                # kwargs["solver_options"]['NumericFocus'] = 3
+                kwargs["solver_options"]['BarHomogeneous'] = 1
+                logger.warning(
+                    f"Rerun with solver settings '{kwargs}'"
+                )
+                status, condition = n.optimize(**kwargs)
+                
+            
     if "infeasible" in condition:
         labels = n.model.compute_infeasibilities()
         logger.info(f"Labels:\n{labels}")
