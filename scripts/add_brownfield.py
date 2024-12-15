@@ -337,7 +337,6 @@ if __name__ == "__main__":
         snakemake = mock_snakemake(
             "add_brownfield",
             clusters="39",
-            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_mocksnakemake.yaml",
             opts="",
             ll="v1.0",
             sector_opts="",

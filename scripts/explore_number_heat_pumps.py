@@ -12,7 +12,7 @@ from build_transport_demand import transport_cols
 import numpy as np
 # heat pumps
 wished_scenarios = ["base", "fast", "slow", "low-demand", "high-demand", "mandate"]
-fn = "/home/lisa/Documents/endogenous_transport/data/statistic_id1434431_total-stock-of-heat-pumps-in-europe-2005-2022.xlsx"
+fn = ".../data/statistic_id1434431_total-stock-of-heat-pumps-in-europe-2005-2022.xlsx"
 historical = pd.read_excel(fn, index_col=[1], sheet_name="Data")
 pumps = (heat_df/typical_generation).reindex(columns=wished_scenarios, level=0).iloc[:2].sum().unstack().T
 
@@ -49,7 +49,7 @@ plt.savefig(snakemake.output.balances[:-19] + "heat_pump_annual_additional.pdf",
             bbox_inches="tight")
 #%%
 # renewable capacities
-fn = "/home/lisa/Documents/endogenous_transport/data/statistic_id864189_renewable-energy-capacity-in-europe-2010-2023.xlsx"
+fn = "../data/statistic_id864189_renewable-energy-capacity-in-europe-2010-2023.xlsx"
 historical = pd.read_excel(fn, index_col=[1], sheet_name="Data")
 historical = historical.dropna(axis=1, how="all").dropna().iloc[:,0].rename("historical")
 historical.index = historical.index.astype(int)
@@ -87,10 +87,10 @@ plt.ylabel("Annual additional RES capacity [GW]")
 plt.savefig(snakemake.output.balances[:-19] + "res_annual_additional.pdf",
             bbox_inches="tight")
 #%%
-transport_demand = pd.read_csv("/home/lisa/Documents/playground/pypsa-eur/resources/test-after-merge-v2/transport_data.csv",
+transport_demand = pd.read_csv("../resources/test-after-merge-v2/transport_data.csv",
                             index_col=[0,1])
 transport_types = ["light", "heavy"]
-fn = "/home/lisa/Documents/endogenous_transport/graphics/demand/"
+fn = "../graphics/demand/"
 for transport_type in transport_types:
     fig, ax = plt.subplots()
     cols = [f"mio km-driven {car_type}" for car_type in transport_cols[transport_type]]

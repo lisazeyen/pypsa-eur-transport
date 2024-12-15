@@ -9,7 +9,7 @@ Created on Wed Jul 24 09:36:58 2024
 # electrification trend
 from build_transport_demand import transport_cols
 import pandas as pd
-idees = pd.read_csv("/home/lisa/Documents/playground/pypsa-eur/resources/test-new-transport/energy_totals.csv",
+idees = pd.read_csv("../resources/test-new-transport/energy_totals.csv",
                     index_col=[0,1])
 
 for transport_type in ["light", "heavy"]:

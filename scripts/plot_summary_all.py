@@ -104,9 +104,9 @@ def get_unchagend_fleet():
     transport_types = ["light", "heavy"]
     ref_year = 2024
     
-    registrations = pd.read_csv("/home/lisa/Documents/playground/pypsa-eur/resources/test-after-merge-v2/car_registration_s_39.csv",
+    registrations = pd.read_csv("../resources/test-after-merge-v2/car_registration_s_39.csv",
                                 index_col=[0,1])
-    historical_ev_share = pd.read_csv("/home/lisa/Documents/playground/pypsa-eur/resources/test-after-merge-v2/historical_ev_share_s_39.csv",
+    historical_ev_share = pd.read_csv("../resources/test-after-merge-v2/historical_ev_share_s_39.csv",
                                       index_col=[0], header=[0,1])
     
     shares = {}
@@ -1281,8 +1281,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("plot_summary_all",
-                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_v2.yaml",)
+        snakemake = mock_snakemake("plot_summary_all")
 
     configure_logging(snakemake)
     set_scenario_config(snakemake)

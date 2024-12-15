@@ -342,8 +342,7 @@ if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
 
-        snakemake = mock_snakemake("cluster_network", clusters=39,
-                                   configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm.yaml")
+        snakemake = mock_snakemake("cluster_network", clusters=39)
     configure_logging(snakemake)
     set_scenario_config(snakemake)
 

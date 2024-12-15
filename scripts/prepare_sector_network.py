@@ -4966,7 +4966,6 @@ if __name__ == "__main__":
 
         snakemake = mock_snakemake(
             "prepare_sector_network",
-            configfiles="/home/lisa/Documents/playground/pypsa-eur/config/config.transport_zecm_mocksnakemake.yaml",
             simpl="",
             opts="",
             clusters="39",
