@@ -20,15 +20,57 @@ remote:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#run
 run:
-  prefix: ""
-  name: ""
+  prefix: constantcars-0612
+  name: 
+    - base
+    - fast
+    - slow
+    - base-p1 
+    - base-p2 
+    - base-m1 
+    - base-m2 
+    - fast-p1 
+    - fast-p2 
+    - fast-m1 
+    - fast-m2 
+    - slow-p1 
+    - slow-p2 
+    - slow-m1 
+    - slow-m2
+    - fast-no-lockin
+    - base-no-lockin
+    # - h2-09
+    # - h2-08 
+    # - h2-07
+    # # - h2-11 
+    # # - h2-12
+    # # - h2-13 
+    # - elec-09
+    # - elec-08 
+    # - elec-07
+    # - elec-11 
+    # - elec-12
+    # - elec-13 
+    # - elec-high-eff
+    # - h2-high-eff
+    # - biomass-hype
+    - dsm
+    - v2g
+    - high-demand
+    - low-demand
+    - mandate
+  #  - high-elec-efficiency
+  #  - logistic
+  #  - high-DAC
   scenarios:
-    enable: false
+    enable: true
     file: config/scenarios.yaml
   disable_progressbar: false
   shared_resources:
-    policy: false
-    exclude: []
+    policy: "test-after-merge-v2"
+    exclude:
+      - time_aggregation
+    #  - snapshot_weightings_elec_s_37_ec_lv1.0_.csv
   shared_cutouts: true
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#foresight
@@ -37,20 +79,24 @@ foresight: myopic
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#scenario
 # Wildcard docs in https://pypsa-eur.readthedocs.io/en/latest/wildcards.html
 scenario:
+  simpl:
+  - ''
   ll:
-  - vopt
+  - v1.0
+  #- vopt
   clusters:
   - 39
-  - 128
-  - 256
+  #- 128
+  #- 256
   opts:
   - ''
   sector_opts:
   - ''
   planning_horizons:
-  # - 2020
-  # - 2030
-  # - 2040
+  - 2025
+  - 2030
+  - 2035
+  - 2040
   - 2050
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#countries
@@ -64,7 +110,7 @@ snapshots:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#enable
 enable:
-  retrieve: auto
+  retrieve: false
   retrieve_databundle: true
   retrieve_cost_data: true
   build_cutout: false
@@ -72,15 +118,16 @@ enable:
   custom_busmap: false
   drop_leap_day: true
 
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#co2-budget
 co2_budget:
-  2020: 0.701
-  2025: 0.524
-  2030: 0.297
-  2035: 0.150
-  2040: 0.071
-  2045: 0.032
-  2050: 0.000
+  2020: 0.8
+  2025: 0.7
+  2030: 0.45  # fit for 55 target
+  2035: 0.3
+  2040: 0.1  # 90% reduction target
+  2045: 0.05
+  2050: 0.000  # carbon neutral target
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
@@ -92,6 +139,7 @@ electricity:
   co2limit_enable: false
   co2limit: 7.75e+7
   co2base: 1.487e+9
+
 
   operational_reserve:
     activate: false
@@ -130,7 +178,6 @@ electricity:
     enable: false
     by_country: false
 
-# docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
   default_cutout: europe-2013-sarah3-era5
   nprocesses: 4
@@ -360,7 +407,6 @@ pypsa_eur:
   - solar-hsat
   - solar
   - ror
-  - nuclear
   StorageUnit:
   - PHS
   - hydro
@@ -415,7 +461,6 @@ biomass:
     2045: 1
     2050: 1
 
-
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solar-thermal
 solar_thermal:
   clearsky_model: simple  # should be "simple" or "enhanced"?
@@ -443,7 +488,15 @@ sector:
   biomass: true
   industry: true
   agriculture: true
-  fossil_fuels: true
+  LULUCF_enable: true
+  LULUCF_factor: 0.77   # share of CO2 in total GHG emissions in 2021 in EU-27 1-(401.7+174.3+77.9)/2817 = 0.77 https://www.statistiques.developpement-durable.gouv.fr/edition-numerique/chiffres-cles-du-climat-2023/en/7-european-overview-of-ghg-emissions
+  LULUCF: # in Mt CO2 equivalent https://www.consilium.europa.eu/de/infographics/fit-for-55-lulucf-land-use-land-use-change-and-forestry/
+    2025: 249
+    2030: 310
+    2035: 310
+    2040: 310
+    2045: 310
+    2050: 310
   district_heating:
     potential: 0.6
     progress:
@@ -488,6 +541,7 @@ sector:
     - ground
   cluster_heat_buses: true
   heat_demand_cutout: default
+  endogenous_transport: true
   bev_dsm_restriction_value: 0.75
   bev_dsm_restriction_time: 7
   transport_heating_deadband_upper: 20.
@@ -496,41 +550,110 @@ sector:
   ICE_upper_degree_factor: 1.6
   EV_lower_degree_factor: 0.98
   EV_upper_degree_factor: 0.63
-  bev_dsm: true
+  bev_dsm: false
   bev_availability: 0.5
   bev_energy: 0.05
   bev_charge_efficiency: 0.9
-  bev_charge_rate: 0.011
+  bev_charge_rate:
+    light: 0.011
+    heavy: 0.05
   bev_avail_max: 0.95
   bev_avail_mean: 0.8
-  v2g: true
+  logistic_curve: false
+  v2g: false
   land_transport_fuel_cell_share:
-    2020: 0
-    2025: 0
-    2030: 0
-    2035: 0
-    2040: 0
-    2045: 0
-    2050: 0
+    light:
+      2020: 0
+      2025: 0
+      2030: 0
+      2035: 0
+      2040: 0
+      2045: 0
+      2050: 0
+    heavy:
+      2020: 0
+      2025: 0
+      2030: 0.1
+      2035: 0.2
+      2040: 0.3
+      2045: 0.4
+      2050: 0.5
   land_transport_electric_share:
-    2020: 0
-    2025: 0.15
-    2030: 0.3
-    2035: 0.45
-    2040: 0.7
-    2045: 0.85
-    2050: 1
+    light:
+      2020: 0
+      2025: 0.15
+      2030: 0.3
+      2035: 0.45
+      2040: 0.7
+      2045: 0.85
+      2050: 1
+    heavy:
+      2020: 0
+      2025: 0
+      2030: 0.1
+      2035: 0.2
+      2040: 0.3
+      2045: 0.4
+      2050: 0.5
   land_transport_ice_share:
-    2020: 1
-    2025: 0.85
-    2030: 0.7
-    2035: 0.55
-    2040: 0.3
-    2045: 0.15
-    2050: 0
-  transport_electric_efficiency: 53.19 # 1 MWh_el = 53.19*100 km
-  transport_fuel_cell_efficiency: 30.003 # 1 MWh_H2 = 30.003*100 km
-  transport_ice_efficiency: 16.0712 # 1 MWh_oil = 16.0712 * 100 km
+    light:
+      2020: 1
+      2025: 0.85
+      2030: 0.7
+      2035: 0.55
+      2040: 0.3
+      2045: 0.15
+      2050: 0
+    heavy:
+      2020: 1
+      2025: 1
+      2030: 0.8
+      2035: 0.6
+      2040: 0.4
+      2045: 0.2
+      2050: 0
+  no_pmaxpu: false
+  early_ice_retirement: false
+  car_reg_factor:
+    light:
+      2025: 0.2  # in 2023 around 15.72% EV share https://www.statista.com/statistics/500546/share-of-fuel-types-of-passenger-car-fleet-in-europe-by-country/
+      2030: 0.55  # emission reduction targets https://www.enerdata.net/publications/executive-briefing/electric-vehicles-trends.html
+      2035: 1.0
+      2040: 1.0
+      2050: 1.0
+    heavy:
+      2025: 0.15  
+      2030: 0.45 # https://climate.ec.europa.eu/eu-action/transport/road-transport-reducing-co2-emissions-vehicles/reducing-co2-emissions-heavy-duty-vehicles_en
+      2035: 0.65
+      2040: 0.9
+      2050: 1.0
+  transport_electric_efficiency:
+    # https://ev-database.org/de/cheatsheet/energy-consumption-electric-car
+    # average energy consumption 188 Wh/km = 0.188 kWh/km = 18.8 kWh/100 km = 0.0188 MWh/ 100 km
+    # 15 kWh/100 km = 0.015 MWh/100km => 1MWh = 66.66 * 100km
+    # 1/0.188 -> 1 MWh = 53.19 * 100 km
+    light: 53.19
+    # assume 40 kWh/100 km = 0.04 MWh/100 km
+    heavy: 25
+  transport_fuel_cell_efficiency:
+    # https://h2-mobility.de/wp-content/uploads/2021/02/H2M_Flottenpapier_English_20180822.pdf
+    # assume in average 1kg_H2 per 100 km -> 1kg_H2 = 33 kWh_H2 (LHV)
+    # 1 MWh_H2 = 30.003 100km
+    light: 30.003
+    # assume 8.5 kg_H2 per 100 km -> 0.2805 MWh_H2 per 100 km
+    heavy: 3.565
+  transport_ice_efficiency:
+    # average consumption 7 liter per 100 km
+    # 0.008889 MWh_petrol = 1 liter
+    # 0.062223 MWh_petrol / 100 km
+    # 1 MWh_petrol = 16.0712
+    light: 16.0712
+    # average consumption 30 liter per 100 km
+    # 0.008889 MWh_petrol = 1 liter
+    # 0.26667 MWh_petrol / 100 km
+    # 1 MWh_petrol = 3.75
+    heavy: 3.75
+  # https://www.consilium.europa.eu/de/infographics/fit-for-55-emissions-cars-and-vans/
   agriculture_machinery_electric_share: 0
   agriculture_machinery_oil_share: 1
   agriculture_machinery_fuel_efficiency: 0.7
@@ -565,7 +688,15 @@ sector:
     2050: 0
   shipping_methanol_efficiency: 0.46
   shipping_oil_efficiency: 0.40
-  aviation_demand_factor: 1.
+  aviation_demand_factor:
+    # 14% growth between 2000-2015 from JRC-IDEES
+    2020: 1.00
+    2025: 1.04
+    2030: 1.04
+    2035: 1.04
+    2040: 1.04
+    2045: 1.04
+    2050: 1.04
   HVC_demand_factor: 1.
   time_dep_hp_cop: true
   heat_pump_sink_T_individual_heating: 55.
@@ -593,9 +724,7 @@ sector:
   resistive_heaters: true
   oil_boilers: false
   biomass_boiler: true
-  overdimension_heat_generators:
-    decentral: 1.1  #to cover demand peaks bigger than data
-    central: 1.0
+  overdimension_individual_heating: 1.1  #to cover demand peaks bigger than data
   chp: true
   micro_chp: false
   solar_thermal: true
@@ -611,6 +740,7 @@ sector:
   hydrogen_turbine: false
   SMR: true
   SMR_cc: true
+  regional_methanol_demand: false
   regional_oil_demand: false
   regional_coal_demand: false
   regional_co2_sequestration_potential:
@@ -624,14 +754,14 @@ sector:
     min_size: 3
     max_size: 25
     years_of_storage: 25
-  co2_sequestration_potential:
-    2020: 0
-    2025: 0
-    2030: 50
-    2035: 100
-    2040: 200
-    2045: 200
-    2050: 200
+    co2_sequestration_potential:
+      2020: 0
+      2025: 25
+      2030: 50
+      2035: 100
+      2040: 200
+      2045: 200
+      2050: 200
   co2_sequestration_cost: 10
   co2_sequestration_lifetime: 50
   co2_spatial: false
@@ -643,6 +773,7 @@ sector:
     # - onshore  # more than 50 km from sea
   - nearshore    # within 50 km of sea
     # - offshore
+  ammonia: false
   methanol:
     regional_methanol_demand: false
     methanol_reforming: false
@@ -656,7 +787,6 @@ sector:
       allam: false
     biomass_to_methanol: false
     biomass_to_methanol_cc: false
-  ammonia: false
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
   min_part_load_methanation: 0.3
@@ -668,6 +798,7 @@ sector:
   use_electrolysis_waste_heat: 0.25
   electricity_transmission_grid: true
   electricity_distribution_grid: true
+  electricity_distribution_grid_cost_factor: 1.0
   electricity_grid_connection: true
   transmission_efficiency:
     DC:
@@ -694,10 +825,7 @@ sector:
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: false
-  electrobiofuels: false
   biosng: false
-  bioH2: false
-  municipal_solid_waste: false
   limit_max_growth:
     enable: false
     # allowing 30% larger than max historic growth
@@ -712,6 +840,27 @@ sector:
       solar: 3
       offwind-ac: 3
       offwind-dc: 3
+  vary_demand:
+    land transport demand heavy:
+      2020: 1.01
+      2025: 1.06 # compared to 2019 from Eurostat
+      2030: 1.11
+      2035: 1.16
+      2040: 1.21
+      2045: 1.26
+      2050: 1.31
+    land transport demand light:
+      2020: 1.014
+      2025: 1.0684 # compared to 2019 from Eurostat
+      2030: 1.11154
+      2035: 1.16224
+      2040: 1.21294
+      2045: 1.263644
+      2050: 1.51714
+  vary:
+    Link:
+      H2 Electrolysis:
+        capital_cost: 1.0
   enhanced_geothermal:
     enable: false
     flexible: true
@@ -719,12 +868,6 @@ sector:
     max_boost: 0.25
     var_cf: true
     sustainability_factor: 0.0025
-  solid_biomass_import:
-    enable: false
-    price: 54 #EUR/MWh
-    max_amount: 1390 # TWh
-    upstream_emissions_factor: .1 #share of solid biomass CO2 emissions at full combustion
-
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#industry
 industry:
@@ -814,7 +957,6 @@ industry:
   MWh_MeOH_per_tMeOH: 5.528
   hotmaps_locate_missing: false
   reference_year: 2019
-  oil_refining_emissions: 0.013
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#costs
@@ -870,7 +1012,7 @@ clustering:
       ramp_limit_down: max
   temporal:
     resolution_elec: false
-    resolution_sector: false
+    resolution_sector: 2190h
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#adjustments
 adjustments:
@@ -880,6 +1022,24 @@ adjustments:
       Link:
         electricity distribution grid:
           capital_cost: 1.0
+        H2 Electrolysis:
+          p_nom_extendable:
+            2020: False
+            2025: False
+            2030: True
+            2035: True
+            2040: True
+            2045: True
+            2050: True
+        Fischer-Tropsch:
+          p_nom_extendable:
+            2020: False
+            2025: False
+            2030: True
+            2035: True
+            2040: True
+            2045: True
+            2050: True
     absolute: false
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#solving
@@ -888,7 +1048,6 @@ solving:
   options:
     clip_p_max_pu: 1.e-2
     load_shedding: false
-    curtailment_mode: false
     noisy_costs: true
     skip_iterations: true
     rolling_horizon: false
@@ -928,12 +1087,12 @@ solving:
 
   solver:
     name: gurobi
-    options: gurobi-default
+    options: gurobi-transport
 
   solver_options:
     highs-default:
       # refer to https://ergo-code.github.io/HiGHS/dev/options/definitions/
-      threads: 1
+      threads: 4
       solver: "ipm"
       run_crossover: "off"
       small_matrix_value: 1e-6
@@ -943,8 +1102,18 @@ solving:
       ipm_optimality_tolerance: 1e-4
       parallel: "on"
       random_seed: 123
+    gurobi-transport:
+      threads: 4
+      method: 2 # barrier
+      crossover: 0
+      BarConvTol: 1.e-5
+      FeasibilityTol: 1.e-4
+      OptimalityTol: 1.e-5
+      Seed: 123
+      AggFill: 0
+      PreDual: 0
     gurobi-default:
-      threads: 8
+      threads: 4
       method: 2 # barrier
       crossover: 0
       BarConvTol: 1.e-6
@@ -982,18 +1151,11 @@ solving:
       Threads: 8
       LpMethod: 2
       Crossover: 0
-      RelGap: 1.e-6
-      Dualize: 0
-    copt-gpu:
-      LpMethod: 6
-      GPUMode: 1
-      PDLPTol: 1.e-5
-      Crossover: 0
     cbc-default: {} # Used in CI
     glpk-default: {} # Used in CI
 
-  mem_mb: 30000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
-  runtime: 6h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
+  mem_mb: 65000 #memory in MB; 20 GB enough for 50+B+I+H2; 100 GB for 181+B+I+H2
+  runtime: 48h #runtime in humanfriendly style https://humanfriendly.readthedocs.io/en/latest/
 
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#plotting
@@ -1013,7 +1175,7 @@ plotting:
   eu_node_location:
     x: -5.5
     y: 46.
-  costs_max: 1000
+  costs_max: 1200
   costs_threshold: 1
   energy_max: 20000
   energy_min: -20000
@@ -1099,8 +1261,6 @@ plotting:
     gas pipeline new: '#a87c62'
     # oil
     oil: '#c9c9c9'
-    oil primary: '#d2d2d2'
-    oil refining: '#e6e6e6'
     imported oil: '#a3a3a3'
     oil boiler: '#adadad'
     residential rural oil boiler: '#a9a9a9'
@@ -1109,6 +1269,8 @@ plotting:
     urban central oil boiler: '#9d9d9d'
     services urban decentral oil boiler: '#999999'
     agriculture machinery oil: '#949494'
+    land transport oil light: '#afafaf'
+    land transport oil heavy: '#afafab'
     shipping oil: "#808080"
     land transport oil: '#afafaf'
     # nuclear
@@ -1129,8 +1291,6 @@ plotting:
     biogas: '#e3d37d'
     biomass: '#baa741'
     solid biomass: '#baa741'
-    municipal solid waste: '#91ba41'
-    solid biomass import: '#d5ca8d'
     solid biomass transport: '#baa741'
     solid biomass for industry: '#7a6d26'
     solid biomass for industry CC: '#47411c'
@@ -1144,11 +1304,7 @@ plotting:
     services rural biomass boiler: '#c6cf98'
     services urban decentral biomass boiler: '#dde5b5'
     biomass to liquid: '#32CD32'
-    unsustainable solid biomass: '#998622'
-    unsustainable bioliquids: '#32CD32'
-    electrobiofuels: 'red'
     BioSNG: '#123456'
-    solid biomass to hydrogen: '#654321'
     # power transmission
     lines: '#6c9459'
     transmission lines: '#6c9459'
@@ -1171,10 +1327,16 @@ plotting:
     home battery charger: '#5e8032'
     home battery discharger: '#3c5221'
     BEV charger: '#baf238'
+    BEV charger light: '#baf238'
+    BEV charger heavy: '#baf238'
     V2G: '#e5ffa8'
     land transport EV: '#baf238'
     land transport demand: '#38baf2'
-    EV battery: '#baf238'
+    land transport EV light: '#baf238'
+    land transport EV heavy: '#baf240'
+    land transport demand light: '#38baf2'
+    land transport demand heavy: '#38ba40'
+    Li ion: '#baf238'
     # hot water storage
     water tanks: '#e69487'
     residential rural water tanks: '#f7b7a3'
@@ -1253,6 +1415,8 @@ plotting:
     H2 Store: '#bf13a0'
     H2 storage: '#bf13a0'
     land transport fuel cell: '#6b3161'
+    land transport fuel cell light: '#6b3161'
+    land transport fuel cell heavy: '#6b3180'
     H2 pipeline: '#f081dc'
     H2 pipeline retrofitted: '#ba99b5'
     H2 Fuel Cell: '#c251ae'
@@ -1275,19 +1439,8 @@ plotting:
     liquid: '#25c49a'
     kerosene for aviation: '#a1ffe6'
     naphtha for industry: '#57ebc4'
-    methanol-to-kerosene: '#C98468'
-    methanol-to-olefins/aromatics: '#FFA07A'
-    Methanol steam reforming: '#FFBF00'
-    Methanol steam reforming CC: '#A2EA8A'
-    methanolisation: '#00FFBF'
-    biomass-to-methanol: '#EAD28A'
-    biomass-to-methanol CC: '#EADBAD'
-    allam methanol: '#B98F76'
-    CCGT methanol: '#B98F76'
-    CCGT methanol CC: '#B98F76'
-    OCGT methanol: '#B98F76'
-    methanol: '#FF7B00'
-    methanol transport: '#FF7B00'
+    methanolisation: '#83d6d5'
+    methanol: '#468c8b'
     shipping methanol: '#468c8b'
     industry methanol: '#468c8b'
     # co2
@@ -1335,3 +1488,5 @@ plotting:
     waste CHP: '#e3d37d'
     waste CHP CC: '#e3d3ff'
     HVC to air: 'k'
+    Load Shedding: "#dd2e23"
+    LULUCF: "g"
